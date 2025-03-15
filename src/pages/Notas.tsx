@@ -1,208 +1,206 @@
 
-import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { PlusCircle, Trash2, Save } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/components/ui/use-toast";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Calculator, Trash2 } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { toast } from "sonner";
 
-interface Grade {
-  id: string;
-  subject: string;
-  score: number;
-  weight: number;
-  date: string;
-}
+// Esquema para validação de notas
+const notaSchema = z.object({
+  disciplina: z.string().min(1, { message: "Disciplina é obrigatória" }),
+  nota: z.string().refine(
+    (val) => {
+      const num = parseFloat(val.replace(',', '.'));
+      return !isNaN(num) && num >= 0 && num <= 10;
+    },
+    { message: "Nota deve ser um número entre 0 e 10" }
+  ),
+  peso: z.string().refine(
+    (val) => {
+      const num = parseFloat(val.replace(',', '.'));
+      return !isNaN(num) && num > 0;
+    },
+    { message: "Peso deve ser um número maior que 0" }
+  ),
+});
+
+type Nota = z.infer<typeof notaSchema> & { id: string };
 
 const Notas = () => {
-  const [grades, setGrades] = useLocalStorage<Grade[]>("student-grades", []);
-  const [open, setOpen] = useState(false);
-  const [newGrade, setNewGrade] = useState<Omit<Grade, "id">>({
-    subject: "",
-    score: 0,
-    weight: 1,
-    date: new Date().toISOString().split("T")[0],
+  const { toast } = useToast();
+  const [notas, setNotas] = useLocalStorage<Nota[]>("notas", []);
+  
+  const form = useForm<z.infer<typeof notaSchema>>({
+    resolver: zodResolver(notaSchema),
+    defaultValues: {
+      disciplina: "",
+      nota: "",
+      peso: "1",
+    },
   });
 
-  const handleAddGrade = () => {
-    if (!newGrade.subject) {
-      toast.error("Por favor, adicione um nome para a matéria.");
-      return;
-    }
-
-    const gradeToAdd = {
-      ...newGrade,
+  const onSubmit = (data: z.infer<typeof notaSchema>) => {
+    const novaNota: Nota = {
+      ...data,
       id: Date.now().toString(),
     };
-
-    setGrades([...grades, gradeToAdd]);
-    setNewGrade({
-      subject: "",
-      score: 0,
-      weight: 1,
-      date: new Date().toISOString().split("T")[0],
+    
+    setNotas([...notas, novaNota]);
+    form.reset();
+    
+    toast({
+      title: "Nota adicionada",
+      description: `${data.disciplina}: ${data.nota}`,
     });
-    setOpen(false);
-    toast.success("Nota adicionada com sucesso!");
   };
 
-  const handleDeleteGrade = (id: string) => {
-    setGrades(grades.filter((grade) => grade.id !== id));
-    toast.success("Nota removida com sucesso!");
+  const removerNota = (id: string) => {
+    setNotas(notas.filter(nota => nota.id !== id));
+    toast({
+      title: "Nota removida",
+      variant: "destructive",
+    });
   };
 
-  const calculateAverage = (subject: string): number => {
-    const subjectGrades = grades.filter((grade) => grade.subject === subject);
-    if (subjectGrades.length === 0) return 0;
-
-    const totalWeight = subjectGrades.reduce((acc, grade) => acc + grade.weight, 0);
-    const weightedSum = subjectGrades.reduce((acc, grade) => acc + grade.score * grade.weight, 0);
-
-    return totalWeight === 0 ? 0 : parseFloat((weightedSum / totalWeight).toFixed(2));
+  const calcularMedia = (disciplina: string) => {
+    const notasDisciplina = notas.filter(n => n.disciplina === disciplina);
+    
+    if (notasDisciplina.length === 0) return 0;
+    
+    let somaPonderada = 0;
+    let somaPesos = 0;
+    
+    notasDisciplina.forEach(nota => {
+      const valorNota = parseFloat(nota.nota.replace(',', '.'));
+      const valorPeso = parseFloat(nota.peso.replace(',', '.'));
+      
+      somaPonderada += valorNota * valorPeso;
+      somaPesos += valorPeso;
+    });
+    
+    return somaPesos === 0 ? 0 : (somaPonderada / somaPesos).toFixed(2);
   };
 
-  const getUniqueSubjects = (): string[] => {
-    return [...new Set(grades.map((grade) => grade.subject))];
-  };
+  // Agrupar notas por disciplina
+  const disciplinas = [...new Set(notas.map(nota => nota.disciplina))];
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Notas</h1>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Adicionar Nota
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Adicionar Nova Nota</DialogTitle>
-              <DialogDescription>
-                Preencha os detalhes da nota que você recebeu
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="subject" className="text-right">
-                  Matéria
-                </Label>
-                <Input
-                  id="subject"
-                  placeholder="Matemática, Física, etc."
-                  className="col-span-3"
-                  value={newGrade.subject}
-                  onChange={(e) => setNewGrade({ ...newGrade, subject: e.target.value })}
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="score" className="text-right">
-                  Nota
-                </Label>
-                <Input
-                  id="score"
-                  type="number"
-                  min="0"
-                  max="10"
-                  step="0.1"
-                  className="col-span-3"
-                  value={newGrade.score}
-                  onChange={(e) => setNewGrade({ ...newGrade, score: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="weight" className="text-right">
-                  Peso
-                </Label>
-                <Input
-                  id="weight"
-                  type="number"
-                  min="1"
-                  max="10"
-                  step="1"
-                  className="col-span-3"
-                  value={newGrade.weight}
-                  onChange={(e) => setNewGrade({ ...newGrade, weight: parseFloat(e.target.value) || 1 })}
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="date" className="text-right">
-                  Data
-                </Label>
-                <Input
-                  id="date"
-                  type="date"
-                  className="col-span-3"
-                  value={newGrade.date}
-                  onChange={(e) => setNewGrade({ ...newGrade, date: e.target.value })}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="submit" onClick={handleAddGrade}>
-                Salvar
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {getUniqueSubjects().length === 0 ? (
-        <Card className="text-center py-10">
+    <div className="container py-8">
+      <h1 className="mb-6 text-3xl font-bold">Notas de Provas</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Adicionar Nota</CardTitle>
+            <CardDescription>
+              Registre suas notas e calcule médias automaticamente
+            </CardDescription>
+          </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">Você ainda não cadastrou nenhuma nota.</p>
-            <Button className="mt-4" onClick={() => setOpen(true)}>
-              Adicionar Nota
-            </Button>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="disciplina"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Disciplina</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ex: Matemática" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="nota"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nota (0-10)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ex: 8.5" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="peso"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Peso</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ex: 2" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <Button type="submit" className="w-full">Adicionar Nota</Button>
+              </form>
+            </Form>
           </CardContent>
         </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {getUniqueSubjects().map((subject) => (
-            <Card key={subject}>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle>{subject}</CardTitle>
-                  <span className="text-2xl font-bold">
-                    {calculateAverage(subject).toString()}
-                  </span>
-                </div>
-                <CardDescription>
-                  Média calculada com base em {grades.filter((g) => g.subject === subject).length} avaliações
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {grades
-                    .filter((grade) => grade.subject === subject)
-                    .map((grade) => (
-                      <div key={grade.id} className="flex justify-between items-center p-2 border rounded-md">
-                        <div>
-                          <span className="font-medium">{grade.score.toString()}</span>
-                          <span className="text-muted-foreground text-xs ml-2">
-                            Peso: {grade.weight} | {new Date(grade.date).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteGrade(grade.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                </div>
+        
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">Médias por Disciplina</h2>
+          
+          {disciplinas.length > 0 ? (
+            disciplinas.map(disciplina => {
+              const media = calcularMedia(disciplina);
+              return (
+                <Card key={disciplina} className={`border-l-4 ${parseFloat(media) >= 6 ? 'border-l-green-500' : 'border-l-red-500'}`}>
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-center">
+                      <CardTitle className="text-lg">{disciplina}</CardTitle>
+                      <span className="text-xl font-bold">{media}</span>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {notas
+                        .filter(nota => nota.disciplina === disciplina)
+                        .map(nota => (
+                          <div key={nota.id} className="flex justify-between items-center bg-muted/50 p-2 rounded">
+                            <span>Nota: {nota.nota} (Peso: {nota.peso})</span>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => removerNota(nota.id)}
+                              className="h-8 w-8 text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          ) : (
+            <Card className="bg-muted/30">
+              <CardContent className="flex flex-col items-center justify-center p-6">
+                <Calculator className="h-12 w-12 text-muted-foreground mb-2" />
+                <p className="text-muted-foreground text-center">
+                  Adicione notas para visualizar as médias por disciplina
+                </p>
               </CardContent>
             </Card>
-          ))}
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };

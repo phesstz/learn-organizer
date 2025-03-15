@@ -1,10 +1,13 @@
 
-import { Calendar, FileText, Home } from "lucide-react";
+import { Calendar, FileText, Home, Moon, Sun, BookOpen, Award } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 
 const Navbar = () => {
   const location = useLocation();
+  const [darkMode, setDarkMode] = useState<boolean>(true);
   
   const navItems = [
     { 
@@ -22,7 +25,23 @@ const Navbar = () => {
       path: "/arquivos", 
       icon: <FileText className="h-5 w-5" /> 
     },
+    { 
+      title: "Estudos", 
+      path: "/estudos", 
+      icon: <BookOpen className="h-5 w-5" /> 
+    },
+    { 
+      title: "Conquistas", 
+      path: "/conquistas", 
+      icon: <Award className="h-5 w-5" /> 
+    },
   ];
+
+  // Alternar tema
+  const toggleTheme = () => {
+    setDarkMode(!darkMode);
+    // No mundo real, aqui atualizaríamos as variáveis CSS para alternar o tema
+  };
 
   return (
     <nav className="fixed bottom-0 left-0 z-50 w-full border-t border-border bg-background/80 backdrop-blur-lg md:top-0 md:border-b md:border-t-0">
@@ -47,6 +66,20 @@ const Navbar = () => {
               <span className="text-xs md:text-sm">{item.title}</span>
             </Link>
           ))}
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            className="ml-2"
+          >
+            {darkMode ? (
+              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all" />
+            ) : (
+              <Moon className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all" />
+            )}
+            <span className="sr-only">Alternar tema</span>
+          </Button>
         </div>
       </div>
     </nav>

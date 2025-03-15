@@ -1,5 +1,5 @@
 
-import { Calendar, FileText, Home, Moon, Sun, BookOpen, Award } from "lucide-react";
+import { Calendar, FileText, Home, Moon, Sun, ClipboardCheck, Calculator, ScanText } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -26,14 +26,19 @@ const Navbar = () => {
       icon: <FileText className="h-5 w-5" /> 
     },
     { 
-      title: "Estudos", 
-      path: "/estudos", 
-      icon: <BookOpen className="h-5 w-5" /> 
+      title: "Notas", 
+      path: "/notas", 
+      icon: <Calculator className="h-5 w-5" /> 
     },
     { 
-      title: "Conquistas", 
-      path: "/conquistas", 
-      icon: <Award className="h-5 w-5" /> 
+      title: "Checklist", 
+      path: "/checklist", 
+      icon: <ClipboardCheck className="h-5 w-5" /> 
+    },
+    { 
+      title: "OCR", 
+      path: "/ocr", 
+      icon: <ScanText className="h-5 w-5" /> 
     },
   ];
 

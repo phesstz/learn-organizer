@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarCheck, FileUp, Lightbulb, ListTodo } from "lucide-react";
+import { CalendarCheck, FileUp, Calculator, ClipboardCheck, ScanText, ListTodo } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Index = () => {
@@ -25,10 +25,22 @@ const Index = () => {
       path: "/arquivos"
     },
     {
-      title: "Lembretes",
-      description: "Configure alertas para não esquecer nenhuma atividade importante.",
-      icon: <Lightbulb className="h-8 w-8 text-primary" />,
-      path: "/calendario"
+      title: "Notas de Provas",
+      description: "Insira suas notas e calcule médias automaticamente.",
+      icon: <Calculator className="h-8 w-8 text-primary" />,
+      path: "/notas"
+    },
+    {
+      title: "Checklist de Provas",
+      description: "Crie listas de conteúdos para estudar antes de uma avaliação.",
+      icon: <ClipboardCheck className="h-8 w-8 text-primary" />,
+      path: "/checklist"
+    },
+    {
+      title: "Reconhecimento de Texto",
+      description: "Escaneie textos de fotos e transforme-os em anotações digitais.",
+      icon: <ScanText className="h-8 w-8 text-primary" />,
+      path: "/ocr"
     }
   ];
 
@@ -43,7 +55,7 @@ const Index = () => {
         </p>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {features.map((feature, index) => (
           <Card key={index} className="glass-card overflow-hidden hover-scale">
             <CardHeader className="pb-2">

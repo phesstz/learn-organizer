@@ -9,6 +9,9 @@ import CalendarPage from "./pages/Calendar";
 import FilesPage from "./pages/Files";
 import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
+import NotasPage from "./pages/Notas";
+import ChecklistPage from "./pages/Checklist";
+import OCRPage from "./pages/OCR";
 
 const queryClient = new QueryClient();
 
@@ -24,8 +27,9 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/calendario" element={<CalendarPage />} />
             <Route path="/arquivos" element={<FilesPage />} />
-            <Route path="/estudos" element={<NotFound />} />
-            <Route path="/conquistas" element={<NotFound />} />
+            <Route path="/notas" element={<NotasPage />} />
+            <Route path="/checklist" element={<ChecklistPage />} />
+            <Route path="/ocr" element={<OCRPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>

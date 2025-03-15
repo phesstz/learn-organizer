@@ -1,13 +1,11 @@
 
-import { Calendar, FileText, Home, Moon, Sun, ClipboardCheck, Calculator, ScanText } from "lucide-react";
+import { Calendar, FileText, Home, ClipboardCheck, Calculator, ScanText } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const Navbar = () => {
   const location = useLocation();
-  const [darkMode, setDarkMode] = useState<boolean>(true);
   
   const navItems = [
     { 
@@ -42,12 +40,6 @@ const Navbar = () => {
     },
   ];
 
-  // Alternar tema
-  const toggleTheme = () => {
-    setDarkMode(!darkMode);
-    // No mundo real, aqui atualizaríamos as variáveis CSS para alternar o tema
-  };
-
   return (
     <nav className="fixed bottom-0 left-0 z-50 w-full border-t border-border bg-background/80 backdrop-blur-lg md:top-0 md:border-b md:border-t-0">
       <div className="mx-auto flex max-w-screen-xl items-center justify-between px-4 py-2">
@@ -72,19 +64,7 @@ const Navbar = () => {
             </Link>
           ))}
           
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleTheme}
-            className="ml-2"
-          >
-            {darkMode ? (
-              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all" />
-            ) : (
-              <Moon className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all" />
-            )}
-            <span className="sr-only">Alternar tema</span>
-          </Button>
+          <ThemeToggle className="ml-2" />
         </div>
       </div>
     </nav>
